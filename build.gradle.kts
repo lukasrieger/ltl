@@ -10,6 +10,7 @@ repositories {
 }
 
 dependencies {
+    implementation("io.kotest:kotest-property:5.9.1")
     testImplementation(kotlin("test"))
 }
 
