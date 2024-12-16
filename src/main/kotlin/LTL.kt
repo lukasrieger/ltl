@@ -4,17 +4,13 @@ import com.lukas.Accept.Fail
 import com.lukas.Accept.Pass
 import com.lukas.LTL.Always
 import com.lukas.LTL.Atom
-import io.kotest.property.Arb
-import io.kotest.property.Gen
-import io.kotest.property.RandomSource
-import io.kotest.property.Sample
-import io.kotest.property.arbitrary.arbitrary
 
 sealed interface LTL<out A> {
     data object Top : LTL<Nothing>
     data object Bottom : LTL<Nothing>
 
     data class Atom<A>(val p: (A) -> Boolean) : LTL<A>
+    data class Pred<A>(val pred: dsl.Pred<A>) : LTL<A>
     data class Not<A>(val p: LTL<A>) : LTL<A>
     data class Or<A>(val p: LTL<A>, val q: LTL<A>) : LTL<A>
     data class Until<A>(val p: LTL<A>, val q: LTL<A>) : LTL<A>
@@ -43,9 +39,6 @@ sealed interface Accept<out A> {
     data class Next<A>(val n: (A) -> Accept<A>) : Accept<A>
 }
 
-fun interface Transducer<A> {
-    fun nextT(): Pair<A, Transducer<A>>?
-}
 
 fun <A> negate(a: Accept<A>): Accept<A> = when (a) {
     Pass -> Fail
@@ -67,6 +60,7 @@ fun <A> eval(formula: LTL<A>): Accept<A> = when (formula) {
     is Always -> eval(formula.p and LTL.Next(Always(formula.p)))
     is LTL.And -> eval(formula.p) andA eval(formula.q)
     is Atom -> eval(LTL.Accept { n -> if (formula.p(n)) LTL.Top else LTL.Bottom })
+    is LTL.Pred -> eval(Atom(formula.pred.toAtom()))
     is LTL.Eventually -> eval(formula.p or LTL.Next(LTL.Eventually(formula.p)))
     is LTL.Implies -> eval(!formula.p or formula.q)
     is LTL.Next -> Accept.Next { eval(formula.p) }
@@ -77,22 +71,3 @@ fun <A> eval(formula: LTL<A>): Accept<A> = when (formula) {
 }
 
 
-fun <A> trans(formula: LTL<A>): Transducer<A> = when(formula) {
-    is LTL.Accept<*> -> TODO()
-    is Always<*> -> TODO()
-    is LTL.And<*> -> TODO()
-    is Atom<*> -> TODO()
-    LTL.Bottom -> TODO()
-    is LTL.Eventually<*> -> TODO()
-    is LTL.Implies<*> -> TODO()
-    is LTL.Next<*> -> TODO()
-    is LTL.Not<*> -> TODO()
-    is LTL.Or<*> -> TODO()
-    LTL.Top -> TODO()
-    is LTL.Until<*> -> TODO()
-}
-
-
-fun toArb(formula: LTL<Int>): Arb<Int> = arbitrary {
-2
-}

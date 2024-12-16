@@ -4,7 +4,10 @@ import io.kotest.property.Arb
 import io.kotest.property.Gen
 import io.kotest.property.arbitrary.*
 
-sealed interface Pred<A>
+sealed interface Pred<A> {
+    fun toAtom(): (A) -> Boolean
+    fun toArb(): Arb<A>
+}
 
 
 sealed interface IntPred : Pred<Int> {
@@ -16,6 +19,9 @@ sealed interface IntPred : Pred<Int> {
     data class NonPositive(val from: Int, val to: Int) : IntPred
     data class Multiple(val k: Int, val max: Int) : IntPred
     data class Factor(val k: Int) : IntPred
+
+    override fun toAtom() = evalToPred()
+    override fun toArb() = evalToGen()
 }
 
 fun lam(fn: (Int) -> Boolean): (Int) -> Boolean = fn
@@ -32,7 +38,7 @@ fun IntPred.evalToPred(): (Int) -> Boolean = when(this) {
     is IntPred.Range -> lam { it in min .. max }
 }
 
-fun IntPred.evalToGen(): Gen<Int> = when(this) {
+fun IntPred.evalToGen(): Arb<Int> = when(this) {
     is IntPred.Const -> Arb.constant(value)
     is IntPred.Factor -> Arb.factor(k)
     is IntPred.Multiple -> Arb.multiple(k, max)

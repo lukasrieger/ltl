@@ -1,8 +1,20 @@
 import com.lukas.*
 import com.lukas.LTL.Atom
+import dsl.IntPred
+import io.kotest.property.arbitrary.next
 
 
-fun main() = println(resultLTL2)
+fun main() = main2()
+//    println(resultLTL2)
+
+fun main2() {
+    val arb = succ.satisfyingArb()
+    val inst = arb.next()
+    inst.take(200).forEach {
+        println(it)
+        if (it % 2 == 0) println("EVEN") else println("ODD")
+    }
+}
 
 
 
@@ -15,7 +27,7 @@ val odd = Atom<Int> { it % 2 != 0 }
 val composite: LTL<Int> = even until (odd until exactly2thousand)
 val alwaysOdd = odd.always()
 
-val succ = accept<Int> { n -> atom((n + 1)::equals) }.always()
+val succ = accept<Int> { n -> LTL.Pred(IntPred.Const(n + 1)) }.always()
 
 val seq1 = (1..1000).filter { it % 2 == 0 }
 val seq2 = (1000..5000).filter { it % 2 != 0 }
